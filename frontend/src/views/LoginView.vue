@@ -2,6 +2,7 @@
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { ROLE_HOME, ROLE_OPTIONS, ROLES } from '@/utils/constants'
 
 const router = useRouter()
 const route = useRoute()
@@ -10,22 +11,10 @@ const authStore = useAuthStore()
 const form = reactive({
   email: '',
   password: '',
-  role: 'estudiante',
+  role: ROLES.ESTUDIANTE,
 })
 
 const error = ref('')
-
-const roles = [
-  { value: 'estudiante', label: 'Estudiante' },
-  { value: 'docente', label: 'Docente' },
-  { value: 'admin', label: 'Administrador' },
-]
-
-const homeByRole = {
-  estudiante: '/estudiante/proyectos',
-  docente: '/docente/revisiones',
-  admin: '/admin/usuarios',
-}
 
 function handleSubmit() {
   error.value = ''
@@ -46,10 +35,21 @@ function handleSubmit() {
     },
   })
 
+  const roleHome = ROLE_HOME[form.role] ?? '/login'
   const redirect =
     typeof route.query.redirect === 'string' ? route.query.redirect : ''
 
-  router.push(redirect || homeByRole[form.role])
+  if (redirect) {
+    const target = router.resolve(redirect)
+    const targetRole = target.meta.role
+
+    if (target.name !== 'not-found' && (!targetRole || targetRole === form.role)) {
+      router.push(redirect)
+      return
+    }
+  }
+
+  router.push(roleHome)
 }
 </script>
 
@@ -88,7 +88,7 @@ function handleSubmit() {
         <div class="form-group">
           <label class="form-label" for="role">Rol (demo)</label>
           <select id="role" v-model="form.role" class="form-control">
-            <option v-for="role in roles" :key="role.value" :value="role.value">
+            <option v-for="role in ROLE_OPTIONS" :key="role.value" :value="role.value">
               {{ role.label }}
             </option>
           </select>

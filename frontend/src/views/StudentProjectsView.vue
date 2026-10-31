@@ -3,37 +3,12 @@ import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useProjectStore } from '@/stores/projectStore'
+import StatusBadge from '@/components/StatusBadge.vue'
+import TableStateRow from '@/components/TableStateRow.vue'
+import { formatDate } from '@/utils/format'
 
 const authStore = useAuthStore()
 const projectStore = useProjectStore()
-
-const estadoLabels = {
-  PENDIENTE: 'Pendiente',
-  EN_REVISION: 'En Revisión',
-  OBSERVADO: 'Observado',
-  APROBADO: 'Aprobado',
-}
-
-function estadoLabel(estado) {
-  return estadoLabels[estado] ?? estado
-}
-
-function estadoBadgeClass(estado) {
-  return {
-    'badge-success': estado === 'APROBADO',
-    'badge-danger': estado === 'OBSERVADO',
-    'badge-warning': estado === 'EN_REVISION',
-  }
-}
-
-function formatDate(value) {
-  if (!value) return ''
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-
-  return date.toLocaleDateString('es-BO', { dateStyle: 'medium' })
-}
 
 onMounted(async () => {
   try {
@@ -73,21 +48,23 @@ onMounted(async () => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="projectStore.loading">
-            <td colspan="5" class="empty">Cargando proyectos…</td>
-          </tr>
-          <tr v-else-if="projectStore.projects.length === 0">
-            <td colspan="5" class="empty">Todavía no registraste proyectos.</td>
-          </tr>
+          <TableStateRow
+            v-if="projectStore.loading"
+            :colspan="5"
+            message="Cargando proyectos…"
+          />
+          <TableStateRow
+            v-else-if="projectStore.projects.length === 0"
+            :colspan="5"
+            message="Todavía no registraste proyectos."
+          />
           <template v-else>
             <tr v-for="project in projectStore.projects" :key="project.id">
               <td>{{ project.titulo }}</td>
               <td>{{ project.carrera }}</td>
               <td>{{ project.modalidad }}</td>
               <td>
-                <span class="badge" :class="estadoBadgeClass(project.estado)">
-                  {{ estadoLabel(project.estado) }}
-                </span>
+                <StatusBadge :estado="project.estado" />
               </td>
               <td>{{ formatDate(project.createdAt) }}</td>
             </tr>
@@ -105,16 +82,6 @@ onMounted(async () => {
 
 .heading {
   gap: var(--space-2);
-}
-
-.table-wrap {
-  overflow-x: auto;
-}
-
-.empty {
-  text-align: center;
-  color: var(--color-text-muted);
-  padding: var(--space-6);
 }
 
 @media (max-width: 640px) {

@@ -277,6 +277,16 @@ textarea {
   background: rgba(79, 70, 229, 0.04);
 }
 
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table-empty {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
 .badge {
   display: inline-flex;
   align-items: center;

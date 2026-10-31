@@ -1,11 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import AppLayout from '@/layouts/AppLayout.vue'
+import { ROLE_HOME, ROLES } from '@/utils/constants'
 
 const routes = [
-  {
-    path: '/',
-    redirect: '/login',
-  },
   {
     path: '/login',
     name: 'login',
@@ -13,44 +11,57 @@ const routes = [
     meta: { title: 'Iniciar sesión' },
   },
   {
-    path: '/estudiante/proyectos',
-    name: 'student-projects',
-    component: () => import('@/views/StudentProjectsView.vue'),
-    meta: {
-      title: 'Mis proyectos',
-      requiresAuth: true,
-      role: 'estudiante',
-    },
-  },
-  {
-    path: '/projects/upload',
-    name: 'project-upload',
-    component: () => import('@/views/StudentProjectUploadView.vue'),
-    meta: {
-      title: 'Subir proyecto',
-      requiresAuth: true,
-      role: 'estudiante',
-    },
-  },
-  {
-    path: '/docente/revisiones',
-    name: 'docente-reviews',
-    component: () => import('@/views/DocenteReviewView.vue'),
-    meta: {
-      title: 'Revisión de proyectos',
-      requiresAuth: true,
-      role: 'docente',
-    },
-  },
-  {
-    path: '/admin/usuarios',
-    name: 'admin-users',
-    component: () => import('@/views/AdminUsersView.vue'),
-    meta: {
-      title: 'Gestión de usuarios',
-      requiresAuth: true,
-      role: 'admin',
-    },
+    path: '/',
+    component: AppLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'home',
+        redirect: () => {
+          const authStore = useAuthStore()
+          return authStore.checkSession()
+            ? ROLE_HOME[authStore.role] ?? '/login'
+            : '/login'
+        },
+      },
+      {
+        path: 'estudiante/proyectos',
+        name: 'student-projects',
+        component: () => import('@/views/StudentProjectsView.vue'),
+        meta: {
+          title: 'Mis proyectos',
+          role: ROLES.ESTUDIANTE,
+        },
+      },
+      {
+        path: 'projects/upload',
+        name: 'project-upload',
+        component: () => import('@/views/StudentProjectUploadView.vue'),
+        meta: {
+          title: 'Subir proyecto',
+          role: ROLES.ESTUDIANTE,
+        },
+      },
+      {
+        path: 'docente/revisiones',
+        name: 'docente-reviews',
+        component: () => import('@/views/DocenteReviewView.vue'),
+        meta: {
+          title: 'Revisión de proyectos',
+          role: ROLES.DOCENTE,
+        },
+      },
+      {
+        path: 'admin/usuarios',
+        name: 'admin-users',
+        component: () => import('@/views/AdminUsersView.vue'),
+        meta: {
+          title: 'Gestión de usuarios',
+          role: ROLES.ADMIN,
+        },
+      },
+    ],
   },
   {
     path: '/sin-acceso',
@@ -74,12 +85,17 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const authStore = useAuthStore()
+  const hasSession = authStore.checkSession()
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  if (to.meta.requiresAuth && !hasSession) {
     return {
       name: 'login',
       query: { redirect: to.fullPath },
     }
+  }
+
+  if (to.name === 'login' && hasSession && ROLE_HOME[authStore.role]) {
+    return { name: 'home' }
   }
 
   if (to.meta.role && authStore.role !== to.meta.role) {

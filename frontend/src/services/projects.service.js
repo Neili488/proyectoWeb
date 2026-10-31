@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { getProjectsMock, projectsMock } from '@/mocks/projectsMock'
+import { ESTADOS } from '@/utils/constants'
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true'
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
@@ -78,7 +79,7 @@ async function create(projectFormData) {
       estudiante: 'Estudiante',
       docenteId: null,
       docenteRevisor: '',
-      estado: 'PENDIENTE',
+      estado: ESTADOS.PENDIENTE,
       archivoUrl: archivo?.name ? `/docs/proyectos/${archivo.name}` : '',
       createdAt: new Date().toISOString(),
       revisiones: [],

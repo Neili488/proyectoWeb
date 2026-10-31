@@ -1,3 +1,5 @@
+export { PROJECT_ESTADOS } from '@/utils/constants'
+
 export const projectsMock = [
   {
     id: 1,
@@ -190,8 +192,6 @@ export const projectsMock = [
     ],
   },
 ]
-
-export const PROJECT_ESTADOS = ['PENDIENTE', 'EN_REVISION', 'OBSERVADO', 'APROBADO']
 
 export function getProjectsMock({
   page = 1,

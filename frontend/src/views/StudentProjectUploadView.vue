@@ -1,11 +1,10 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useProjectStore } from '@/stores/projectStore'
+import { CARRERAS_SUBIDA, MODALIDADES } from '@/utils/constants'
+import { formatFileSize } from '@/utils/format'
 
 const projectStore = useProjectStore()
-
-const carreras = ['Sistemas', 'Civil', 'Industrial', 'Mecánica', 'Eléctrica']
-const modalidades = ['Tesis de Grado', 'Proyecto de Grado', 'Trabajo Dirigido']
 
 const form = reactive({
   titulo: '',
@@ -81,8 +80,8 @@ async function handleSubmit() {
 
   try {
     await projectStore.uploadProject(formData)
-    successMessage.value = 'Proyecto registrado correctamente.'
     resetForm()
+    successMessage.value = 'Proyecto registrado correctamente.'
   } catch {
     // El store expone el mensaje en projectStore.error
   }
@@ -130,7 +129,7 @@ async function handleSubmit() {
             <label class="form-label" for="carrera">Carrera</label>
             <select id="carrera" v-model="form.carrera" class="form-control">
               <option value="" disabled>Selecciona una carrera</option>
-              <option v-for="carrera in carreras" :key="carrera" :value="carrera">
+              <option v-for="carrera in CARRERAS_SUBIDA" :key="carrera" :value="carrera">
                 {{ carrera }}
               </option>
             </select>
@@ -141,7 +140,7 @@ async function handleSubmit() {
             <label class="form-label" for="modalidad">Modalidad</label>
             <select id="modalidad" v-model="form.modalidad" class="form-control">
               <option value="" disabled>Selecciona una modalidad</option>
-              <option v-for="modalidad in modalidades" :key="modalidad" :value="modalidad">
+              <option v-for="modalidad in MODALIDADES" :key="modalidad" :value="modalidad">
                 {{ modalidad }}
               </option>
             </select>
@@ -159,7 +158,9 @@ async function handleSubmit() {
             accept="application/pdf,.pdf"
             @change="onFileChange"
           />
-          <p v-if="form.archivo" class="muted file-name">{{ form.archivo.name }}</p>
+          <p v-if="form.archivo" class="muted file-name">
+            {{ form.archivo.name }} ({{ formatFileSize(form.archivo.size) }})
+          </p>
           <p v-if="errors.archivo" class="form-error">{{ errors.archivo }}</p>
         </div>
 

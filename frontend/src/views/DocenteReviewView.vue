@@ -1,6 +1,14 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useProjectStore } from '@/stores/projectStore'
+import StatusBadge from '@/components/StatusBadge.vue'
+import TableStateRow from '@/components/TableStateRow.vue'
+import {
+  CARRERAS,
+  ESTADO_OPTIONS,
+  REVISION_ESTADO_OPTIONS,
+} from '@/utils/constants'
+import { formatDateTime } from '@/utils/format'
 
 const projectStore = useProjectStore()
 
@@ -10,36 +18,7 @@ const reviewOpen = ref(false)
 const successMessage = ref('')
 const reviewErrors = reactive({})
 
-const estadosFiltro = [
-  { value: '', label: 'Todos' },
-  { value: 'PENDIENTE', label: 'Pendiente' },
-  { value: 'EN_REVISION', label: 'En Revisión' },
-  { value: 'OBSERVADO', label: 'Observado' },
-  { value: 'APROBADO', label: 'Aprobado' },
-]
-
-const carreras = [
-  'Sistemas',
-  'Civil',
-  'Industrial',
-  'Mecánica',
-  'Eléctrica',
-  'Metalurgia',
-  'Química',
-]
-
-const estadosRevision = [
-  { value: 'OBSERVADO', label: 'Observado' },
-  { value: 'APROBADO', label: 'Aprobado' },
-  { value: 'EN_REVISION', label: 'En Revisión' },
-]
-
-const estadoLabels = {
-  PENDIENTE: 'Pendiente',
-  EN_REVISION: 'En Revisión',
-  OBSERVADO: 'Observado',
-  APROBADO: 'Aprobado',
-}
+const estadosFiltro = [{ value: '', label: 'Todos' }, ...ESTADO_OPTIONS]
 
 const review = reactive({
   comentario: '',
@@ -47,30 +26,6 @@ const review = reactive({
 })
 
 const revisiones = computed(() => projectStore.currentProject?.revisiones ?? [])
-
-function estadoLabel(estado) {
-  return estadoLabels[estado] ?? estado
-}
-
-function estadoBadgeClass(estado) {
-  return {
-    'badge-success': estado === 'APROBADO',
-    'badge-danger': estado === 'OBSERVADO',
-    'badge-warning': estado === 'EN_REVISION',
-  }
-}
-
-function formatDate(value) {
-  if (!value) return ''
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-
-  return date.toLocaleString('es-BO', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  })
-}
 
 async function loadProjects() {
   try {
@@ -182,7 +137,7 @@ onBeforeUnmount(() => {
         <label class="form-label" for="filtro-carrera">Carrera</label>
         <select id="filtro-carrera" v-model="carreraFiltro" class="form-control">
           <option value="">Todas</option>
-          <option v-for="carrera in carreras" :key="carrera" :value="carrera">
+          <option v-for="carrera in CARRERAS" :key="carrera" :value="carrera">
             {{ carrera }}
           </option>
         </select>
@@ -217,23 +172,23 @@ onBeforeUnmount(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="projectStore.loading">
-            <td colspan="5" class="empty">Cargando proyectos…</td>
-          </tr>
-          <tr v-else-if="projectStore.projects.length === 0">
-            <td colspan="5" class="empty">
-              No hay proyectos que coincidan con los filtros.
-            </td>
-          </tr>
+          <TableStateRow
+            v-if="projectStore.loading"
+            :colspan="5"
+            message="Cargando proyectos…"
+          />
+          <TableStateRow
+            v-else-if="projectStore.projects.length === 0"
+            :colspan="5"
+            message="No hay proyectos que coincidan con los filtros."
+          />
           <template v-else>
             <tr v-for="project in projectStore.projects" :key="project.id">
               <td>{{ project.estudiante }}</td>
               <td>{{ project.titulo }}</td>
               <td>{{ project.carrera }}</td>
               <td>
-                <span class="badge" :class="estadoBadgeClass(project.estado)">
-                  {{ estadoLabel(project.estado) }}
-                </span>
+                <StatusBadge :estado="project.estado" />
               </td>
               <td class="text-right">
                 <button
@@ -294,12 +249,7 @@ onBeforeUnmount(() => {
               <div>
                 <span class="detail-label">Estado actual</span>
                 <p>
-                  <span
-                    class="badge"
-                    :class="estadoBadgeClass(projectStore.currentProject.estado)"
-                  >
-                    {{ estadoLabel(projectStore.currentProject.estado) }}
-                  </span>
+                  <StatusBadge :estado="projectStore.currentProject.estado" />
                 </p>
               </div>
             </div>
@@ -331,7 +281,7 @@ onBeforeUnmount(() => {
                 >
                   <div class="row-between">
                     <strong>{{ revision.docente }}</strong>
-                    <span class="muted">{{ formatDate(revision.fecha) }}</span>
+                    <span class="muted">{{ formatDateTime(revision.fecha) }}</span>
                   </div>
                   <p>{{ revision.comentario }}</p>
                 </li>
@@ -362,7 +312,7 @@ onBeforeUnmount(() => {
                 <select id="estado" v-model="review.estado" class="form-control">
                   <option value="" disabled>Selecciona un estado</option>
                   <option
-                    v-for="estado in estadosRevision"
+                    v-for="estado in REVISION_ESTADO_OPTIONS"
                     :key="estado.value"
                     :value="estado.value"
                   >
@@ -418,18 +368,8 @@ onBeforeUnmount(() => {
   justify-content: flex-end;
 }
 
-.table-wrap {
-  overflow-x: auto;
-}
-
 .text-right {
   text-align: right;
-}
-
-.empty {
-  text-align: center;
-  color: var(--color-text-muted);
-  padding: var(--space-6);
 }
 
 .modal-overlay {
